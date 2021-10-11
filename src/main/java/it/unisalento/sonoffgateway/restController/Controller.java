@@ -29,7 +29,10 @@ public class Controller {
 	String reqToipic = "cmnd/tasmota_8231A8/Power1";
 	String statTopic = "stat/tasmota_8231A8/POWER1";
 	
+	private CountDownLatch processingFinishedLatch;
 	
+	String status = new String();
+		
 	@RequestMapping(value="changeStatus/{status}", method = RequestMethod.GET, consumes = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Boolean> changeStatus(@PathVariable("status") String status) throws Exception{
 		try {
@@ -77,6 +80,70 @@ public class Controller {
 		}catch (Exception e) {
 			throw e;
 			}
+	}
+	
+
+	
+	@RequestMapping(value="getStatus", method = RequestMethod.GET, consumes = MediaType.APPLICATION_JSON_VALUE)
+	public String getStatus() throws Exception{
+		try {
+			status = "";
+			MqttClient client = new MqttClient(broker, clientId, new MemoryPersistence());
+			
+			client.setCallback(new MqttCallback() {
+				
+				@Override
+				public void messageArrived(String topic, MqttMessage message) throws Exception {
+				}
+				
+				@Override
+				public void deliveryComplete(IMqttDeliveryToken token) {
+					System.out.println("PUBLISH SUCCESSFULL");
+				}
+				
+				@Override
+				public void connectionLost(Throwable cause) {
+					// TODO Auto-generated method stub
+					
+				}
+			});	
+			
+			MqttConnectOptions opt = new MqttConnectOptions();
+			
+			opt.setCleanSession(true);
+			
+			System.out.println("CONNECTIONG TO BROKER " + broker);
+			
+			client.connect(opt);
+			
+			System.out.println("CONNECT SUCCESSED");
+
+			client.subscribe(statTopic, new IMqttMessageListener() {
+				
+				@Override
+				public void messageArrived(String topic, MqttMessage message) throws Exception {
+					String m = new String(message.getPayload(), StandardCharsets.UTF_8);
+					System.out.println("MESSAGE ARRIVED: " + m);
+					status = m;
+					System.out.println("CLOSING CLIENT CONNECTION..");
+					client.disconnect();					
+				}
+			});
+			
+			
+			MqttMessage message = new MqttMessage();
+			
+			client.publish(reqToipic, message);	//BLOCKING
+			
+			while(client.isConnected()) {
+				
+			}
+
+			return status;
+		}catch (Exception e) {
+			throw e;
+			}
+		
 	}
 	
 }
