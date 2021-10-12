@@ -28,12 +28,10 @@ public class Controller {
 	String cmdTopic = "cmnd/tasmota_8231A8/POWER1";
 	String reqToipic = "cmnd/tasmota_8231A8/Power1";
 	String statTopic = "stat/tasmota_8231A8/POWER1";
-	
-	private CountDownLatch processingFinishedLatch;
-	
+		
 	String status = new String();
 		
-	@RequestMapping(value="changeStatus/{status}", method = RequestMethod.GET, consumes = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(value="changeStatus/{status}", method = RequestMethod.GET)
 	public ResponseEntity<Boolean> changeStatus(@PathVariable("status") String status) throws Exception{
 		try {
 			MqttClient client = new MqttClient(broker, clientId, new MemoryPersistence());
@@ -84,7 +82,7 @@ public class Controller {
 	
 
 	
-	@RequestMapping(value="getStatus", method = RequestMethod.GET, consumes = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(value="getStatus", method = RequestMethod.GET)
 	public String getStatus() throws Exception{
 		try {
 			status = "";
