@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class Controller {
 
 
-	String broker = "tcp://192.168.1.67:1883";
+	String broker = "tcp://localhost:1883";
 	String clientId = "raspberrypi";
 	
 	String cmdTopic = "cmnd/tasmota_8231A8/POWER1";
