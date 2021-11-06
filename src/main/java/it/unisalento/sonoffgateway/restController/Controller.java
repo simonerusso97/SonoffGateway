@@ -7,6 +7,7 @@ import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.springframework.http.HttpStatus;
@@ -28,40 +29,13 @@ public class Controller {
 	String statTopic = "stat/tasmota_8231A8/POWER1";
 		
 	String status = new String();
+	
 		
 	@RequestMapping(value="changeStatusON", method = RequestMethod.GET)
 	public ResponseEntity<Boolean> changeStatusON() throws Exception{
 		try {
-			MqttClient client = new MqttClient(broker, clientId, new MemoryPersistence());
 			
-			client.setCallback(new MqttCallback() {
-				
-				@Override
-				public void messageArrived(String topic, MqttMessage message) throws Exception {
-				}
-				
-				@Override
-				public void deliveryComplete(IMqttDeliveryToken token) {
-					System.out.println("PUBLISH SUCCESSFULL");
-				}
-				
-				@Override
-				public void connectionLost(Throwable cause) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-			});	
-			
-			MqttConnectOptions opt = new MqttConnectOptions();
-			
-			opt.setCleanSession(true);
-			
-			System.out.println("CONNECTIONG TO BROKER " + broker);
-			
-			client.connect(opt);
-			
-			System.out.println("CONNECT SUCCESSED");
+			MqttClient client = connectToBroker();
 			
 			MqttMessage message = new MqttMessage("ON".getBytes());
 			
@@ -81,36 +55,7 @@ public class Controller {
 	@RequestMapping(value="changeStatusOFF", method = RequestMethod.GET)
 	public ResponseEntity<Boolean> changeStatusOFF() throws Exception{
 		try {
-			MqttClient client = new MqttClient(broker, clientId, new MemoryPersistence());
-			
-			client.setCallback(new MqttCallback() {
-				
-				@Override
-				public void messageArrived(String topic, MqttMessage message) throws Exception {
-				}
-				
-				@Override
-				public void deliveryComplete(IMqttDeliveryToken token) {
-					System.out.println("PUBLISH SUCCESSFULL");
-				}
-				
-				@Override
-				public void connectionLost(Throwable cause) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-			});	
-			
-			MqttConnectOptions opt = new MqttConnectOptions();
-			
-			opt.setCleanSession(true);
-			
-			System.out.println("CONNECTIONG TO BROKER " + broker);
-			
-			client.connect(opt);
-			
-			System.out.println("CONNECT SUCCESSED");
+			MqttClient client = connectToBroker();
 			
 			MqttMessage message = new MqttMessage("OFF".getBytes());
 			
@@ -133,35 +78,8 @@ public class Controller {
 	public String getStatus() throws Exception{
 		try {
 			status = "";
-			MqttClient client = new MqttClient(broker, clientId, new MemoryPersistence());
-			
-			client.setCallback(new MqttCallback() {
-				
-				@Override
-				public void messageArrived(String topic, MqttMessage message) throws Exception {
-				}
-				
-				@Override
-				public void deliveryComplete(IMqttDeliveryToken token) {
-					System.out.println("PUBLISH SUCCESSFULL");
-				}
-				
-				@Override
-				public void connectionLost(Throwable cause) {
-					// TODO Auto-generated method stub
-					
-				}
-			});	
-			
-			MqttConnectOptions opt = new MqttConnectOptions();
-			
-			opt.setCleanSession(true);
-			
-			System.out.println("CONNECTIONG TO BROKER " + broker);
-			
-			client.connect(opt);
-			
-			System.out.println("CONNECT SUCCESSED");
+			MqttClient client = connectToBroker();;
+
 
 			client.subscribe(statTopic, new IMqttMessageListener() {
 				
@@ -189,6 +107,44 @@ public class Controller {
 			throw e;
 			}
 		
+	}
+	
+	private MqttClient connectToBroker() throws MqttException {
+		MqttClient client;
+
+		client = new MqttClient(broker, clientId, new MemoryPersistence());
+		
+		
+		client.setCallback(new MqttCallback() {
+		
+			@Override
+			public void messageArrived(String topic, MqttMessage message) throws Exception {
+			}
+		
+			@Override
+			public void deliveryComplete(IMqttDeliveryToken token) {
+				System.out.println("PUBLISH SUCCESSFULL");
+			}
+		
+			@Override
+			public void connectionLost(Throwable cause) {
+				// TODO Auto-generated method stub
+			
+			}
+		
+		});	
+	
+		MqttConnectOptions opt = new MqttConnectOptions();
+	
+		opt.setCleanSession(true);
+	
+		System.out.println("CONNECTIONG TO BROKER " + broker);
+	
+		client.connect(opt);
+	
+		System.out.println("CONNECT SUCCESSED");
+		
+		return client;
 	}
 	
 }
