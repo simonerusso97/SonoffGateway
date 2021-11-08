@@ -27,16 +27,11 @@ import com.google.firebase.messaging.MulticastMessage;
 @RestController
 public class Controller {
 
-
-	String broker = "tcp://localhost:1883";
-	String clientId = "raspberrypi";
-	
 	String cmdTopic = "cmnd/tasmota_8231A8/POWER1";
 	String reqToipic = "cmnd/tasmota_8231A8/Power1";
 	String statTopic = "stat/tasmota_8231A8/POWER1";
-		
-	String status = new String();
 	
+	String status = new String();
 		
 	@RequestMapping(value="changeStatusON", method = RequestMethod.GET)
 	public ResponseEntity<Boolean> changeStatusON() throws Exception{
@@ -50,7 +45,7 @@ public class Controller {
 
 			client.disconnect();
 			
-			System.out.println("CLIENT DISCONNESSO");
+			System.out.println(client.getClientId() + ": CLIENT DISCONNESSO");
 			
 			return new ResponseEntity<Boolean>(HttpStatus.OK);
 			
@@ -70,7 +65,7 @@ public class Controller {
 
 			client.disconnect();
 			
-			System.out.println("CLIENT DISCONNESSO");
+			System.out.println(client.getClientId() + ": CLIENT DISCONNESSO");
 			
 			return new ResponseEntity<Boolean>(HttpStatus.OK);
 			
@@ -87,6 +82,8 @@ public class Controller {
 			status = "";
 			MqttClient client = connectToBroker();;
 
+			
+			//TODO: correggere bug
 
 			client.subscribe(statTopic, new IMqttMessageListener() {
 				
@@ -95,8 +92,8 @@ public class Controller {
 					String m = new String(message.getPayload(), StandardCharsets.UTF_8);
 					System.out.println("MESSAGE ARRIVED: " + m);
 					status = m;
-					System.out.println("CLOSING CLIENT CONNECTION..");
-					client.disconnect();					
+					client.disconnect();	
+					System.out.println(client.getClientId() + ": CLIENT DISCONNESSO");
 				}
 			});
 			
@@ -117,10 +114,13 @@ public class Controller {
 	}
 	
 	private MqttClient connectToBroker() throws MqttException {
-		MqttClient client;
-
-		client = new MqttClient(broker, clientId, new MemoryPersistence());
 		
+		String broker = "tcp://localhost:1883";
+		String clientId = "raspberrypi";
+		
+		
+		MqttClient client = new MqttClient(broker, clientId, new MemoryPersistence());
+
 		
 		client.setCallback(new MqttCallback() {
 		

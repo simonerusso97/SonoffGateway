@@ -41,6 +41,7 @@ import com.google.firebase.messaging.Notification;
 
 @SpringBootApplication
 public class SonoffGatewayApplication{
+	String status = new String();
 
 	public static void main(String[] args) {
 		SpringApplication app = new SpringApplication(SonoffGatewayApplication.class);
@@ -76,6 +77,10 @@ public class SonoffGatewayApplication{
 			Set<String> keys = jsonObject.keySet(); 
 			System.out.println(keys);
 			tokens = (List<String>) jsonObject.get(keys.toArray()[0].toString());
+			for(String tok: tokens) {
+				System.out.println(tok);
+			}
+			
 		} catch (IOException | ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -86,12 +91,16 @@ public class SonoffGatewayApplication{
 	}
 
 	private static void connectAndSubscribeMqtt(ArrayList<String> tokens) {
-		String broker = "tcp://localhost:1883";
-		String clientId = "raspberrypi";
+		String broker = "tcp://192.168.1.67:1883";
 		
-		
-		//TODO:è il topic giusto?
+		String reqToipic = "cmnd/tasmota_8231A8/Power1";
 		String statTopic = "stat/tasmota_8231A8/POWER1";
+		
+		MqttMessage message = new MqttMessage();
+
+		String clientId = "notificationChannel";
+		
+		
         try {
         	MqttClient client = new MqttClient(broker, clientId, new MemoryPersistence());
     		
@@ -124,8 +133,23 @@ public class SonoffGatewayApplication{
     		client.connect(opt);
     	
     		System.out.println("CONNECT SUCCESSED");
+
     		
     		client.subscribe(statTopic, new IMqttMessageListener() {
+
+				@Override
+				public void messageArrived(String topic, MqttMessage message) throws Exception {
+					String m = new String(message.getPayload(), StandardCharsets.UTF_8);
+					;
+				}});
+    		
+    		
+    		client.publish(reqToipic, message);	//BLOCKING
+
+    		
+    		client.subscribe(statTopic, new IMqttMessageListener() {
+    			
+    			//TODO: correggere bug
     			
     			@Override
     			public void messageArrived(String topic, MqttMessage message) throws Exception {
@@ -138,6 +162,8 @@ public class SonoffGatewayApplication{
     						.putData("body", m)
     				        .addAllTokens(tokens)
     				        .build();
+    				System.out.println("SENDING...");
+
     				BatchResponse response = FirebaseMessaging.getInstance().sendMulticast(notMess);
     				    // See the BatchResponse reference documentation
     				    // for the contents of response.
@@ -146,6 +172,7 @@ public class SonoffGatewayApplication{
     				
 				}
     		});
+    		
         }catch (Exception e) {
 			// TODO: handle exception
 		}
