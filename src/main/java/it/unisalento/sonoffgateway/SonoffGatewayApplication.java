@@ -93,7 +93,6 @@ public class SonoffGatewayApplication{
 	private static void connectAndSubscribeMqtt(ArrayList<String> tokens) {
 		String broker = "tcp://localhost:1883";
 		
-		String reqToipic = "cmnd/tasmota_8231A8/Power1";
 		String statTopic = "stat/tasmota_8231A8/POWER1";
 		
 		MqttMessage message = new MqttMessage();

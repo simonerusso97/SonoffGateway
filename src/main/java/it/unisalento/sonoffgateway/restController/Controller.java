@@ -1,8 +1,14 @@
 package it.unisalento.sonoffgateway.restController;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
@@ -12,9 +18,14 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,6 +34,7 @@ import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.MulticastMessage;
+
 
 @RestController
 public class Controller {
@@ -111,6 +123,46 @@ public class Controller {
 			throw e;
 			}
 		
+	}
+	
+	@RequestMapping(value="saveToken", method = RequestMethod.POST)
+	public ResponseEntity<String> saveToken(@RequestBody String token) throws Exception{
+		
+        JSONParser parser = new JSONParser();
+        JSONArray array = new JSONArray();
+        
+        String tokenValue = token.split("=")[1];
+		Reader reader;
+		List<String> tokens = new ArrayList<>();
+		try {
+			reader = new FileReader("./tokens.json");
+			JSONObject jsonObject = (JSONObject) parser.parse(reader);
+			
+			tokens = (List<String>) jsonObject.get("token");
+			
+			for(String tok: tokens) {
+				array.add(tok);
+			}
+			array.add(tokenValue);
+			
+			
+			jsonObject = new JSONObject();
+			jsonObject.put("token",array);
+			
+			File f = new File("./tokens");
+			f.delete();
+			
+			FileWriter file = new FileWriter("./tokens.json");
+			file.write(jsonObject.toJSONString());
+			file.close();
+			
+		} catch (IOException | ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return new ResponseEntity<String>(HttpStatus.OK);
+
 	}
 	
 	private MqttClient connectToBroker() throws MqttException {
